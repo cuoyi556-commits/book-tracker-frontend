@@ -686,37 +686,41 @@
                 border-radius: 16px;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.15);
                 z-index: 1000;
-                width: 50px;
-                transition: width 0.3s ease-out;
-                overflow: hidden;
-            }
-
-            .mobile-drawer.expanded {
                 width: 280px;
                 max-height: 70vh;
                 overflow-y: auto;
             }
 
+            .mobile-drawer.collapsed {
+                width: 50px;
+                overflow: hidden;
+            }
+
             .mobile-drawer-header {
                 display: flex;
                 align-items: center;
-                justify-content: center;
-                padding: 15px 10px;
+                justify-content: space-between;
+                padding: 15px 20px;
                 cursor: pointer;
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-top-left-radius: 16px;
+                border-top-right-radius: 16px;
+            }
+
+            .mobile-drawer.collapsed .mobile-drawer-header {
+                justify-content: center;
+                padding: 15px 10px;
             }
 
             .mobile-drawer-header h3 {
-                display: none;
-            }
-
-            .mobile-drawer.expanded .mobile-drawer-header h3 {
-                display: block;
                 font-size: 16px;
                 font-weight: 600;
                 color: white;
                 margin: 0;
-                flex: 1;
+            }
+
+            .mobile-drawer.collapsed .mobile-drawer-header h3 {
+                display: none;
             }
 
             .mobile-drawer-toggle {
@@ -732,17 +736,19 @@
                 transition: all 0.3s;
             }
 
-            .mobile-drawer.expanded .mobile-drawer-toggle {
-                background: rgba(255,255,255,0.2);
+            .mobile-drawer.collapsed .mobile-drawer-toggle {
+                background: rgba(255,255,255,0.4);
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
             }
 
             .mobile-drawer-content {
-                display: none;
                 padding: 20px;
             }
 
-            .mobile-drawer.expanded .mobile-drawer-content {
-                display: block;
+            .mobile-drawer.collapsed .mobile-drawer-content {
+                display: none;
             }
 
             /* 移动端控制区域样式 */
@@ -1134,10 +1140,10 @@
     </div>
 
     <!-- 移动端右上角控制按钮 -->
-    <div id="mobileDrawer" class="mobile-drawer">
+    <div id="mobileDrawer" class="mobile-drawer collapsed">
         <div class="mobile-drawer-header" onclick="toggleMobileDrawer()">
             <h3>⚙️ 操作面板</h3>
-            <div class="mobile-drawer-toggle">▼</div>
+            <div class="mobile-drawer-toggle">✕</div>
         </div>
         <div class="mobile-drawer-content">
             <div class="mobile-control-section">
@@ -1945,8 +1951,28 @@
         // 切换移动端控制面板
         function toggleMobileDrawer() {
             const drawer = document.getElementById('mobileDrawer');
-            drawer.classList.toggle('expanded');
+            const toggle = drawer.querySelector('.mobile-drawer-toggle');
+
+            drawer.classList.toggle('collapsed');
+
+            // 切换图标
+            if (drawer.classList.contains('collapsed')) {
+                toggle.textContent = '⚙️';
+            } else {
+                toggle.textContent = '✕';
+            }
         }
+
+        // 初始化控制面板图标
+        document.addEventListener('DOMContentLoaded', () => {
+            const drawer = document.getElementById('mobileDrawer');
+            const toggle = drawer.querySelector('.mobile-drawer-toggle');
+            if (drawer.classList.contains('collapsed')) {
+                toggle.textContent = '⚙️';
+            } else {
+                toggle.textContent = '✕';
+            }
+        });
 
         // 切换移动端帮助弹窗
         function toggleMobileHelp() {
