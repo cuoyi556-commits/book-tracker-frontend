@@ -590,14 +590,15 @@
             .main-content {
                 margin-top: 80px;
                 padding: 0.5rem;
+                padding-bottom: 60px; /* 为底部抽屉留空间 */
             }
 
-            /* 预览区域 - 缩小并适应移动屏幕 */
+            /* 预览区域 - 自适应高度，完整显示 */
             #preview-container {
                 width: 100% !important;
                 height: auto !important;
-                aspect-ratio: 3/4;
-                min-height: 500px;
+                min-height: 600px; /* 确保有足够高度显示所有内容 */
+                display: block !important;
             }
 
             /* 缩小标题字体 */
@@ -615,7 +616,7 @@
             .months-grid {
                 padding: 10px 15px !important;
                 height: auto !important;
-                min-height: 400px;
+                min-height: 450px; /* 增加高度确保显示所有月份 */
             }
 
             .month-row {
@@ -1367,6 +1368,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadProgress();
             renderPreview();
+
+            // 初始化桌面端控件
             document.getElementById('titleFont').value = state.titleFont;
             document.getElementById('subFont').value = state.subFont;
             document.getElementById('monthFont').value = state.monthFont || "'Long Cang', cursive";
@@ -1374,10 +1377,27 @@
             applyTheme(state.theme || 'theme-dark');
             updateMonthFont();
 
-            // 初始化颜色选择器
+            // 初始化颜色选择器（桌面端）
             if (state.titleColor) document.getElementById('titleColor').value = state.titleColor;
             if (state.subColor) document.getElementById('subColor').value = state.subColor;
             if (state.monthColor) document.getElementById('monthColor').value = state.monthColor;
+
+            // 初始化移动端控件（如果存在）
+            const mobileTitleFont = document.getElementById('mobileTitleFont');
+            const mobileSubFont = document.getElementById('mobileSubFont');
+            const mobileMonthFont = document.getElementById('mobileMonthFont');
+            const mobileTheme = document.getElementById('mobileThemeSelect');
+            const mobileTitleColor = document.getElementById('mobileTitleColor');
+            const mobileSubColor = document.getElementById('mobileSubColor');
+            const mobileMonthColor = document.getElementById('mobileMonthColor');
+
+            if (mobileTitleFont) mobileTitleFont.value = state.titleFont;
+            if (mobileSubFont) mobileSubFont.value = state.subFont;
+            if (mobileMonthFont) mobileMonthFont.value = state.monthFont || "'Long Cang', cursive";
+            if (mobileTheme) mobileTheme.value = state.theme || 'theme-dark';
+            if (mobileTitleColor && state.titleColor) mobileTitleColor.value = state.titleColor;
+            if (mobileSubColor && state.subColor) mobileSubColor.value = state.subColor;
+            if (mobileMonthColor && state.monthColor) mobileMonthColor.value = state.monthColor;
 
             // 应用颜色
             applyDefaultTitleColor();
@@ -1387,16 +1407,27 @@
 
         // 切换主题
         function changeTheme() {
-            const theme = document.getElementById('themeSelect').value;
+            // 从桌面或移动端控件获取主题值
+            const desktopTheme = document.getElementById('themeSelect');
+            const mobileTheme = document.getElementById('mobileThemeSelect');
+            const theme = desktopTheme.value || mobileTheme.value;
+
             state.theme = theme;
             applyTheme(theme);
 
+            // 同步两个控件
+            if (desktopTheme) desktopTheme.value = theme;
+            if (mobileTheme) mobileTheme.value = theme;
+
             // 如果是自定义主题，显示上传按钮
             const uploadBtn = document.getElementById('uploadBgBtn');
+            const mobileUploadBtn = document.getElementById('mobileUploadBgBtn');
             if (theme === 'theme-custom') {
-                uploadBtn.classList.remove('hidden');
+                if (uploadBtn) uploadBtn.classList.remove('hidden');
+                if (mobileUploadBtn) mobileUploadBtn.classList.remove('hidden');
             } else {
-                uploadBtn.classList.add('hidden');
+                if (uploadBtn) uploadBtn.classList.add('hidden');
+                if (mobileUploadBtn) mobileUploadBtn.classList.add('hidden');
             }
 
             // 切换主题时重新应用颜色
@@ -1444,14 +1475,36 @@
         // 切换字体
         function changeFont(type) {
             if (type === 'title') {
-                state.titleFont = document.getElementById('titleFont').value;
+                const desktopFont = document.getElementById('titleFont');
+                const mobileFont = document.getElementById('mobileTitleFont');
+                const fontValue = desktopFont.value || mobileFont.value;
+
+                state.titleFont = fontValue;
                 document.getElementById('mainTitle').style.fontFamily = state.titleFont;
+
+                // 同步控件
+                if (desktopFont) desktopFont.value = fontValue;
+                if (mobileFont) mobileFont.value = fontValue;
             } else if (type === 'sub') {
-                state.subFont = document.getElementById('subFont').value;
+                const desktopFont = document.getElementById('subFont');
+                const mobileFont = document.getElementById('mobileSubFont');
+                const fontValue = desktopFont.value || mobileFont.value;
+
+                state.subFont = fontValue;
                 document.getElementById('subTitle').style.fontFamily = state.subFont;
+
+                if (desktopFont) desktopFont.value = fontValue;
+                if (mobileFont) mobileFont.value = fontValue;
             } else if (type === 'month') {
-                state.monthFont = document.getElementById('monthFont').value;
+                const desktopFont = document.getElementById('monthFont');
+                const mobileFont = document.getElementById('mobileMonthFont');
+                const fontValue = desktopFont.value || mobileFont.value;
+
+                state.monthFont = fontValue;
                 updateMonthFont();
+
+                if (desktopFont) desktopFont.value = fontValue;
+                if (mobileFont) mobileFont.value = fontValue;
             }
             saveProgress();
         }
@@ -1897,81 +1950,6 @@
                 toggleMobileHelp();
             }
         }
-
-        // 同步桌面和移动端控件状态
-        function syncMobileControls() {
-            // 同步主题选择
-            const desktopTheme = document.getElementById('themeSelect').value;
-            const mobileTheme = document.getElementById('mobileThemeSelect');
-            if (mobileTheme) mobileTheme.value = desktopTheme;
-
-            // 同步字体选择
-            const desktopTitleFont = document.getElementById('titleFont').value;
-            const mobileTitleFont = document.getElementById('mobileTitleFont');
-            if (mobileTitleFont) mobileTitleFont.value = desktopTitleFont;
-
-            const desktopSubFont = document.getElementById('subFont').value;
-            const mobileSubFont = document.getElementById('mobileSubFont');
-            if (mobileSubFont) mobileSubFont.value = desktopSubFont;
-
-            const desktopMonthFont = document.getElementById('monthFont').value;
-            const mobileMonthFont = document.getElementById('mobileMonthFont');
-            if (mobileMonthFont) mobileMonthFont.value = desktopMonthFont;
-
-            // 同步颜色选择
-            const desktopTitleColor = document.getElementById('titleColor').value;
-            const mobileTitleColor = document.getElementById('mobileTitleColor');
-            if (mobileTitleColor) mobileTitleColor.value = desktopTitleColor;
-
-            const desktopSubColor = document.getElementById('subColor').value;
-            const mobileSubColor = document.getElementById('mobileSubColor');
-            if (mobileSubColor) mobileSubColor.value = desktopSubColor;
-
-            const desktopMonthColor = document.getElementById('monthColor').value;
-            const mobileMonthColor = document.getElementById('mobileMonthColor');
-            if (mobileMonthColor) mobileMonthColor.value = desktopMonthColor;
-
-            // 同步自定义背景上传按钮状态
-            const uploadBtn = document.getElementById('uploadBgBtn');
-            const mobileUploadBtn = document.getElementById('mobileUploadBgBtn');
-            if (uploadBtn && mobileUploadBtn) {
-                if (uploadBtn.classList.contains('hidden')) {
-                    mobileUploadBtn.classList.add('hidden');
-                } else {
-                    mobileUploadBtn.classList.remove('hidden');
-                }
-            }
-        }
-
-        // 在页面加载和状态改变时同步控件
-        const originalChangeTheme = changeTheme;
-        changeTheme = function() {
-            originalChangeTheme();
-            syncMobileControls();
-        };
-
-        const originalChangeFont = changeFont;
-        changeFont = function(type) {
-            originalChangeFont(type);
-            syncMobileControls();
-        };
-
-        const originalChangeColor = changeColor;
-        changeColor = function(type) {
-            originalChangeColor(type);
-            syncMobileControls();
-        };
-
-        const originalResetColor = resetColor;
-        resetColor = function(type) {
-            originalResetColor(type);
-            syncMobileControls();
-        };
-
-        // 页面加载时同步
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(syncMobileControls, 100);
-        });
     </script>
 </body>
 </html>
