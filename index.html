@@ -1,0 +1,1977 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>读书记录生成器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Long+Cang&Liu+Jian+Mao+Cao&Ma+Shan+Zheng&Noto+Sans+SC:wght@300;400;500;700&Noto+Serif+SC:wght@300;400;500;700&ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <style>
+
+        * {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+
+        /* 预览区域样式 - 3:4比例 */
+        #preview-container {
+            width: 900px;
+            height: 1200px;
+            position: relative;
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+
+        /* 背景主题样式 */
+        .theme-dark {
+            background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+        }
+
+        .theme-warm {
+            background: linear-gradient(180deg, #f5e6d3 0%, #fff8f0 50%, #f5e6d3 100%);
+        }
+
+        .theme-cool {
+            background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 50%, #e0f2fe 100%);
+        }
+
+        .theme-forest {
+            background: linear-gradient(180deg, #1a2f1a 0%, #2d4a2d 50%, #1a2f1a 100%);
+        }
+
+        .theme-sunset {
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+
+        .theme-minimal {
+            background: linear-gradient(180deg, #fafafa 0%, #ffffff 50%, #fafafa 100%);
+        }
+
+        .theme-vintage {
+            background: linear-gradient(180deg, #d4c5b0 0%, #e8dcc8 50%, #d4c5b0 100%);
+        }
+
+        .theme-ocean {
+            background: linear-gradient(180deg, #0c2340 0%, #1da2d8 30%, #0c2340 100%);
+        }
+
+        /* 自定义背景主题 */
+        .theme-custom {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        /* 自定义背景时的文字样式（默认深色背景，白色文字） */
+        .theme-custom .month-label {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .theme-custom .month-row {
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.4);
+        }
+
+        .theme-custom #mainTitle,
+        .theme-custom #subTitle {
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .theme-custom #subTitle {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 主题对应的文字颜色 */
+        .theme-dark .month-label,
+        .theme-forest .month-label,
+        .theme-sunset .month-label,
+        .theme-ocean .month-label {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: rgba(255, 255, 255, 0.95);
+        }
+
+        .theme-warm .month-label,
+        .theme-cool .month-label,
+        .theme-minimal .month-label,
+        .theme-vintage .month-label {
+            background: rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            color: rgba(0, 0, 0, 0.75);
+        }
+
+        .theme-dark .month-row,
+        .theme-forest .month-row,
+        .theme-sunset .month-row,
+        .theme-ocean .month-row {
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.4);
+        }
+
+        .theme-warm .month-row,
+        .theme-cool .month-row,
+        .theme-minimal .month-row,
+        .theme-vintage .month-row {
+            border-bottom: 1px dashed rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-dark #mainTitle,
+        .theme-dark #subTitle,
+        .theme-forest #mainTitle,
+        .theme-forest #subTitle,
+        .theme-sunset #mainTitle,
+        .theme-sunset #subTitle,
+        .theme-ocean #mainTitle,
+        .theme-ocean #subTitle {
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .theme-dark #subTitle,
+        .theme-forest #subTitle,
+        .theme-sunset #subTitle,
+        .theme-ocean #subTitle {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .theme-warm #mainTitle,
+        .theme-cool #mainTitle,
+        .theme-minimal #mainTitle,
+        .theme-vintage #mainTitle {
+            color: rgba(0, 0, 0, 0.85);
+        }
+
+        .theme-warm #subTitle,
+        .theme-cool #subTitle,
+        .theme-minimal #subTitle,
+        .theme-vintage #subTitle {
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        /* 标题区域装饰 */
+        .title-decoration {
+            display: none;
+        }
+
+        /* 月份布局 - 12行，每行高度固定 */
+        .months-grid {
+            padding: 15px 25px;
+            height: 950px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .month-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-height: 0;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.4);
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+
+        .month-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+
+        .month-label {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.95);
+            flex-shrink: 0;
+            text-transform: uppercase;
+            font-family: 'Long Cang', cursive;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .books-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            flex: 1;
+            align-items: center;
+        }
+
+        /* 底部装饰 */
+        .footer-decoration {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.3);
+            letter-spacing: 4px;
+        }
+
+        .book-cover {
+            width: 80px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: transform 0.2s;
+        }
+
+        .books-container {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        /* 添加书籍的占位框 - 自适应行高 */
+        .add-book-slot {
+            height: calc((950px - 12 * 10px) / 12);
+            aspect-ratio: 2/3;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .add-book-slot:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .add-book-slot .plus-icon {
+            font-size: 24px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .add-book-slot:hover .plus-icon {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 已添加的书籍 - 自适应行高 */
+        .added-book {
+            position: relative;
+            height: calc((950px - 12 * 10px) / 12);
+        }
+
+        .added-book img {
+            height: 100%;
+            width: auto;
+            aspect-ratio: 2/3;
+            object-fit: cover;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .added-book .remove-icon {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 18px;
+            height: 18px;
+            background: #e07a5f;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            line-height: 1;
+            opacity: 0;
+            transition: opacity 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .added-book:hover .remove-icon {
+            opacity: 1;
+        }
+
+        /* 加载中动画 */
+        .loading-slot {
+            height: calc((950px - 12 * 10px) / 12);
+            aspect-ratio: 2/3;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .loading-spinner {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 弹窗样式 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        /* Toast通知 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 9999;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+        .toast.info { background: #3b82f6; }
+
+        /* 按钮样式 */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        /* 侧边控制面板 */
+        .control-panel {
+            position: fixed;
+            right: 20px;
+            top: 140px;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            width: 280px;
+            max-height: calc(90vh - 120px);
+            overflow-y: auto;
+        }
+
+        .control-section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .control-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        /* 页面标题样式 */
+        .page-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1.5rem 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .page-title {
+            text-align: center;
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 0.1em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .page-title::before {
+            content: '📚';
+            margin-right: 0.3em;
+            font-size: 2.2rem;
+        }
+
+        .page-title::after {
+            content: '📖';
+            margin-left: 0.3em;
+            font-size: 2.2rem;
+        }
+
+        .page-subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+        }
+
+        /* 调整主内容区域的上边距 */
+        .main-content {
+            margin-top: 120px;
+        }
+
+        /* 左侧使用说明面板 */
+        .help-panel {
+            position: fixed;
+            left: 20px;
+            top: 140px;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            width: 260px;
+            max-height: calc(90vh - 120px);
+            overflow-y: auto;
+            font-size: 13px;
+        }
+
+        .help-panel h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #374151;
+        }
+
+        .help-section {
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .help-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .help-section h4 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #4b5563;
+            margin-bottom: 8px;
+        }
+
+        .help-section ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .help-section li {
+            color: #6b7280;
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+
+        .help-section li:before {
+            content: "• ";
+            color: #9ca3af;
+        }
+
+        .tip {
+            background: #fef3c7;
+            border-left: 3px solid #f59e0b;
+            padding: 8px 10px;
+            margin-top: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #92400e;
+        }
+
+        /* ==================== 移动端适配 ==================== */
+        @media (max-width: 767px) {
+            /* 隐藏左侧使用说明面板 */
+            .help-panel {
+                display: none;
+            }
+
+            /* 调整页面标题 */
+            .page-header {
+                padding: 1rem 0;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .page-title::before,
+            .page-title::after {
+                font-size: 1.3rem;
+            }
+
+            .page-subtitle {
+                font-size: 0.85rem;
+            }
+
+            /* 调整主内容区域 */
+            .main-content {
+                margin-top: 80px;
+                padding: 0.5rem;
+            }
+
+            /* 预览区域 - 缩小并适应移动屏幕 */
+            #preview-container {
+                width: 100% !important;
+                height: auto !important;
+                aspect-ratio: 3/4;
+                min-height: 500px;
+            }
+
+            /* 缩小标题字体 */
+            #mainTitle {
+                font-size: 1.5rem !important;
+                min-width: 150px !important;
+            }
+
+            #subTitle {
+                font-size: 1rem !important;
+                min-width: 100px !important;
+            }
+
+            /* 调整月份网格 */
+            .months-grid {
+                padding: 10px 15px !important;
+                height: auto !important;
+                min-height: 400px;
+            }
+
+            .month-row {
+                margin-bottom: 6px;
+                padding-bottom: 6px;
+            }
+
+            /* 缩小月份标签 */
+            .month-label {
+                width: 36px !important;
+                height: 36px !important;
+                font-size: 12px !important;
+                letter-spacing: 1px !important;
+            }
+
+            /* 缩小书籍封面 */
+            .added-book img {
+                max-height: 60px !important;
+            }
+
+            .add-book-slot {
+                max-height: 60px !important;
+            }
+
+            .add-book-slot .plus-icon {
+                font-size: 18px !important;
+            }
+
+            /* 隐藏桌面版右侧控制面板 */
+            .control-panel {
+                display: none;
+            }
+
+            /* 创建移动端底部控制栏 */
+            .mobile-controls {
+                display: flex !important;
+            }
+
+            /* 调整底部装饰 */
+            .footer-decoration {
+                font-size: 10px !important;
+                bottom: 10px !important;
+            }
+
+            /* 调整弹窗 */
+            .modal-content {
+                width: 95% !important;
+                max-width: none !important;
+                margin: 10px;
+                padding: 20px !important;
+            }
+
+            /* 调整 Toast 位置 */
+            .toast {
+                top: 10px !important;
+                right: 10px !important;
+                left: 10px !important;
+                max-width: none !important;
+            }
+
+            /* 移动端控制面板抽屉 */
+            .mobile-drawer {
+                display: block;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: white;
+                border-top-left-radius: 20px;
+                border-top-right-radius: 20px;
+                box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+                z-index: 1000;
+                transform: translateY(0);
+                transition: transform 0.3s ease-out;
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+
+            .mobile-drawer.collapsed {
+                transform: translateY(calc(100% - 50px));
+            }
+
+            .mobile-drawer-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 15px 20px;
+                border-bottom: 1px solid #e5e7eb;
+                cursor: pointer;
+                background: #f9fafb;
+                border-top-left-radius: 20px;
+                border-top-right-radius: 20px;
+            }
+
+            .mobile-drawer-header h3 {
+                font-size: 16px;
+                font-weight: 600;
+                color: #374151;
+                margin: 0;
+            }
+
+            .mobile-drawer-toggle {
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #e5e7eb;
+                border-radius: 50%;
+                font-size: 18px;
+                transition: transform 0.3s;
+            }
+
+            .mobile-drawer.collapsed .mobile-drawer-toggle {
+                transform: rotate(180deg);
+            }
+
+            .mobile-drawer-content {
+                padding: 20px;
+            }
+
+            /* 移动端控制区域样式 */
+            .mobile-control-section {
+                margin-bottom: 24px;
+                padding-bottom: 20px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+
+            .mobile-control-section:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+
+            .mobile-control-section h4 {
+                font-size: 14px;
+                font-weight: 600;
+                color: #374151;
+                margin-bottom: 12px;
+            }
+
+            .mobile-control-section label {
+                font-size: 13px;
+                color: #6b7280;
+                display: block;
+                margin-bottom: 6px;
+            }
+
+            .mobile-control-section select,
+            .mobile-control-section input[type="color"] {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                font-size: 14px;
+                margin-bottom: 12px;
+                background: white;
+            }
+
+            .mobile-control-section input[type="color"] {
+                height: 44px;
+                padding: 4px;
+                cursor: pointer;
+            }
+
+            .mobile-btn {
+                width: 100%;
+                padding: 12px 20px;
+                border: none;
+                border-radius: 8px;
+                font-size: 15px;
+                font-weight: 500;
+                cursor: pointer;
+                margin-bottom: 10px;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .mobile-btn:last-child {
+                margin-bottom: 0;
+            }
+
+            .mobile-btn-primary {
+                background: #3b82f6;
+                color: white;
+            }
+
+            .mobile-btn-success {
+                background: #10b981;
+                color: white;
+            }
+
+            .mobile-btn-secondary {
+                background: #6b7280;
+                color: white;
+            }
+
+            .mobile-btn-outline {
+                background: white;
+                color: #374151;
+                border: 1px solid #d1d5db;
+            }
+
+            .mobile-color-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 12px;
+            }
+
+            .mobile-color-row label {
+                margin-bottom: 0;
+                flex: 1;
+            }
+
+            .mobile-color-row input[type="color"] {
+                width: 50px;
+                margin-bottom: 0;
+            }
+
+            .mobile-reset-btn {
+                padding: 8px 16px;
+                background: #f3f4f6;
+                border: none;
+                border-radius: 6px;
+                font-size: 13px;
+                color: #6b7280;
+                cursor: pointer;
+            }
+
+            /* 移动端帮助按钮 */
+            .mobile-help-btn {
+                display: block !important;
+                position: fixed;
+                top: 80px;
+                left: 10px;
+                width: 40px;
+                height: 40px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 50%;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                z-index: 999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                cursor: pointer;
+            }
+
+            /* 移动端帮助弹窗 */
+            .mobile-help-modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 9999;
+                padding: 20px;
+                overflow-y: auto;
+            }
+
+            .mobile-help-modal.active {
+                display: block;
+            }
+
+            .mobile-help-content {
+                background: white;
+                border-radius: 16px;
+                padding: 24px;
+                max-width: 400px;
+                margin: 40px auto;
+                box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            }
+
+            .mobile-help-content h3 {
+                font-size: 18px;
+                font-weight: 600;
+                margin-bottom: 16px;
+                color: #374151;
+            }
+
+            .mobile-help-section {
+                margin-bottom: 20px;
+                padding-bottom: 16px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+
+            .mobile-help-section:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+            }
+
+            .mobile-help-section h4 {
+                font-size: 15px;
+                font-weight: 600;
+                color: #4b5563;
+                margin-bottom: 10px;
+            }
+
+            .mobile-help-section ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .mobile-help-section li {
+                color: #6b7280;
+                margin-bottom: 8px;
+                line-height: 1.6;
+                font-size: 14px;
+            }
+
+            .mobile-help-section li:before {
+                content: "• ";
+                color: #9ca3af;
+            }
+
+            .mobile-tip {
+                background: #fef3c7;
+                border-left: 3px solid #f59e0b;
+                padding: 10px 12px;
+                margin-top: 10px;
+                border-radius: 4px;
+                font-size: 13px;
+                color: #92400e;
+            }
+
+            .mobile-help-close {
+                width: 100%;
+                padding: 12px 20px;
+                background: #3b82f6;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 15px;
+                font-weight: 500;
+                cursor: pointer;
+                margin-top: 20px;
+            }
+        }
+
+        /* 移动端元素默认隐藏 */
+        .mobile-controls,
+        .mobile-drawer,
+        .mobile-help-btn,
+        .mobile-help-modal {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- 页面标题 -->
+    <div class="page-header">
+        <h1 class="page-title">阅读记录生成器</h1>
+        <p class="page-subtitle">记录你的阅读足迹，分享读书的快乐</p>
+    </div>
+
+    <!-- 左侧使用说明 -->
+    <div class="help-panel">
+        <h3>📖 使用指南</h3>
+
+        <div class="help-section">
+            <h4>添加书籍</h4>
+            <ul>
+                <li>点击月份右侧的 "+" 按钮</li>
+                <li>输入书名或ISBN，按回车搜索</li>
+                <li>支持豆瓣图书自动搜索</li>
+                <li>也可切换到"本地上传"上传封面</li>
+            </ul>
+        </div>
+
+        <div class="help-section">
+            <h4>编辑标题</h4>
+            <ul>
+                <li>直接点击主/副标题位置</li>
+                <li>输入完成后自动保存</li>
+            </ul>
+        </div>
+
+        <div class="help-section">
+            <h4>自定义样式</h4>
+            <ul>
+                <li>8种预设背景主题可选</li>
+                <li>支持上传自定义背景图片</li>
+                <li>6种字体可选</li>
+                <li>字体颜色可自由调整</li>
+            </ul>
+            <div class="tip">💡 切换主题后记得保存进度</div>
+        </div>
+
+        <div class="help-section">
+            <h4>删除书籍</h4>
+            <ul>
+                <li>鼠标悬停在书籍封面上</li>
+                <li>点击右上角的 "×" 删除</li>
+            </ul>
+        </div>
+
+        <div class="help-section">
+            <h4>导出图片</h4>
+            <ul>
+                <li>编辑完成后点击"生成图片"</li>
+                <li>图片自动下载到本地</li>
+                <li>建议定期点击"保存进度"</li>
+            </ul>
+            <div class="tip">💡 每月最多可添加12本书</div>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="flex items-start justify-center min-h-screen py-8 px-4 main-content">
+        <!-- 预览区域 -->
+        <div id="preview-container" class="shadow-2xl">
+            <!-- 装饰年份 -->
+            <div class="title-decoration">2024</div>
+
+            <!-- 标题区域 -->
+            <div class="text-center pt-10 pb-6 px-8 relative z-10 flex items-baseline justify-center gap-2">
+                <input type="text"
+                    id="mainTitle"
+                    placeholder="2025阅读记录"
+                    class="text-center text-4xl font-bold bg-transparent border-none outline-none placeholder-gray-500"
+                    style="color: rgba(255, 255, 255, 0.85); width: auto; min-width: 200px;"
+                    oninput="updateTitle()">
+                <input type="text"
+                    id="subTitle"
+                    placeholder="留下你的读书感悟吧"
+                    class="text-lg bg-transparent border-none outline-none placeholder-gray-500"
+                    style="color: rgba(255, 255, 255, 0.6); width: auto; min-width: 150px;"
+                    oninput="updateSubtitle()">
+            </div>
+
+            <!-- 月份网格 -->
+            <div class="px-6 pb-16">
+                <div id="previewBooks" class="months-grid"></div>
+            </div>
+
+            <!-- 底部装饰 -->
+            <div class="footer-decoration">READING YEAR</div>
+        </div>
+    </div>
+
+    <!-- 移动端帮助按钮 -->
+    <div class="mobile-help-btn" onclick="toggleMobileHelp()">❓</div>
+
+    <!-- 移动端帮助弹窗 -->
+    <div id="mobileHelpModal" class="mobile-help-modal" onclick="closeMobileHelpOutside(event)">
+        <div class="mobile-help-content">
+            <h3>📖 使用指南</h3>
+
+            <div class="mobile-help-section">
+                <h4>添加书籍</h4>
+                <ul>
+                    <li>点击月份右侧的 "+" 按钮</li>
+                    <li>输入书名或ISBN，按回车搜索</li>
+                    <li>支持豆瓣图书自动搜索</li>
+                    <li>也可切换到"本地上传"上传封面</li>
+                </ul>
+            </div>
+
+            <div class="mobile-help-section">
+                <h4>编辑标题</h4>
+                <ul>
+                    <li>直接点击主/副标题位置</li>
+                    <li>输入完成后自动保存</li>
+                </ul>
+            </div>
+
+            <div class="mobile-help-section">
+                <h4>自定义样式</h4>
+                <ul>
+                    <li>8种预设背景主题可选</li>
+                    <li>支持上传自定义背景图片</li>
+                    <li>6种字体可选</li>
+                    <li>字体颜色可自由调整</li>
+                </ul>
+                <div class="mobile-tip">💡 切换主题后记得保存进度</div>
+            </div>
+
+            <div class="mobile-help-section">
+                <h4>删除书籍</h4>
+                <ul>
+                    <li>点击书籍封面</li>
+                    <li>点击右上角的 "×" 删除</li>
+                </ul>
+            </div>
+
+            <div class="mobile-help-section">
+                <h4>导出图片</h4>
+                <ul>
+                    <li>编辑完成后点击"生成图片"</li>
+                    <li>图片自动下载到本地</li>
+                    <li>建议定期点击"保存进度"</li>
+                </ul>
+                <div class="mobile-tip">💡 每月最多可添加12本书</div>
+            </div>
+
+            <button class="mobile-help-close" onclick="toggleMobileHelp()">关闭</button>
+        </div>
+    </div>
+
+    <!-- 移动端底部控制抽屉 -->
+    <div id="mobileDrawer" class="mobile-drawer collapsed">
+        <div class="mobile-drawer-header" onclick="toggleMobileDrawer()">
+            <h3>⚙️ 操作面板</h3>
+            <div class="mobile-drawer-toggle">▼</div>
+        </div>
+        <div class="mobile-drawer-content">
+            <div class="mobile-control-section">
+                <h4>背景主题</h4>
+                <label>选择主题</label>
+                <select id="mobileThemeSelect" onchange="changeTheme()">
+                    <option value="theme-dark">🌑 暗夜黑</option>
+                    <option value="theme-warm">🌅 温暖米</option>
+                    <option value="theme-cool">❄️ 清凉蓝</option>
+                    <option value="theme-forest">🌲 森林绿</option>
+                    <option value="theme-sunset">🌆 日暮紫</option>
+                    <option value="theme-minimal">⬜ 极简白</option>
+                    <option value="theme-vintage">📜 复古棕</option>
+                    <option value="theme-ocean">🌊 深海蓝</option>
+                    <option value="theme-custom">🖼️ 自定义背景</option>
+                </select>
+                <button id="mobileUploadBgBtn" onclick="document.getElementById('customBgInput').click()" class="mobile-btn mobile-btn-outline hidden">
+                    📤 上传背景图片
+                </button>
+            </div>
+
+            <div class="mobile-control-section">
+                <h4>字体设置</h4>
+                <label>主标题字体</label>
+                <select id="mobileTitleFont" onchange="changeFont('title')">
+                    <option value="'Noto Sans SC', sans-serif">思源黑体（默认）</option>
+                    <option value="'Noto Serif SC', serif">思源宋体</option>
+                    <option value="'ZCOOL KuaiLe', cursive">站酷快乐体</option>
+                    <option value="'Ma Shan Zheng', cursive">马善政毛笔</option>
+                    <option value="'Liu Jian Mao Cao', cursive">刘建毛笔</option>
+                    <option value="'Long Cang', cursive">龙藏体</option>
+                </select>
+                <div class="mobile-color-row">
+                    <label>颜色</label>
+                    <input type="color" id="mobileTitleColor" value="#ffffff" onchange="changeColor('title')">
+                    <button class="mobile-reset-btn" onclick="resetColor('title')">重置</button>
+                </div>
+
+                <label>副标题字体</label>
+                <select id="mobileSubFont" onchange="changeFont('sub')">
+                    <option value="'Noto Sans SC', sans-serif">思源黑体（默认）</option>
+                    <option value="'Noto Serif SC', serif">思源宋体</option>
+                    <option value="'ZCOOL KuaiLe', cursive">站酷快乐体</option>
+                    <option value="'Ma Shan Zheng', cursive">马善政毛笔</option>
+                    <option value="'Liu Jian Mao Cao', cursive">刘建毛笔</option>
+                    <option value="'Long Cang', cursive">龙藏体</option>
+                </select>
+                <div class="mobile-color-row">
+                    <label>颜色</label>
+                    <input type="color" id="mobileSubColor" value="#ffffff" onchange="changeColor('sub')">
+                    <button class="mobile-reset-btn" onclick="resetColor('sub')">重置</button>
+                </div>
+
+                <label>月份标签字体</label>
+                <select id="mobileMonthFont" onchange="changeFont('month')">
+                    <option value="'Long Cang', cursive">龙藏体（默认）</option>
+                    <option value="'Noto Sans SC', sans-serif">思源黑体</option>
+                    <option value="'Noto Serif SC', serif">思源宋体</option>
+                    <option value="'ZCOOL KuaiLe', cursive">站酷快乐体</option>
+                    <option value="'Ma Shan Zheng', cursive">马善政毛笔</option>
+                    <option value="'Liu Jian Mao Cao', cursive">刘建毛笔</option>
+                </select>
+                <div class="mobile-color-row">
+                    <label>颜色</label>
+                    <input type="color" id="mobileMonthColor" value="#ffffff" onchange="changeColor('month')">
+                    <button class="mobile-reset-btn" onclick="resetColor('month')">重置</button>
+                </div>
+            </div>
+
+            <div class="mobile-control-section">
+                <h4>操作</h4>
+                <button onclick="saveProgress()" class="mobile-btn mobile-btn-secondary">💾 保存进度</button>
+                <button onclick="clearAll()" class="mobile-btn mobile-btn-secondary">🗑️ 清空所有</button>
+                <button onclick="generateImage()" class="mobile-btn mobile-btn-success">📷 生成图片</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 侧边控制面板 -->
+    <div class="control-panel">
+        <h2 class="text-lg font-semibold mb-4">⚙️ 操作面板</h2>
+
+        <div class="control-section">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">背景主题</h3>
+            <select id="themeSelect" onchange="changeTheme()" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm mb-2">
+                <option value="theme-dark">🌑 暗夜黑</option>
+                <option value="theme-warm">🌅 温暖米</option>
+                <option value="theme-cool">❄️ 清凉蓝</option>
+                <option value="theme-forest">🌲 森林绿</option>
+                <option value="theme-sunset">🌆 日暮紫</option>
+                <option value="theme-minimal">⬜ 极简白</option>
+                <option value="theme-vintage">📜 复古棕</option>
+                <option value="theme-ocean">🌊 深海蓝</option>
+                <option value="theme-custom">🖼️ 自定义背景</option>
+            </select>
+            <input type="file" id="customBgInput" accept="image/*" class="hidden" onchange="handleCustomBg(event)">
+            <button id="uploadBgBtn" onclick="document.getElementById('customBgInput').click()" class="btn btn-secondary w-full text-sm py-1.5 hidden">
+                📤 上传背景图片
+            </button>
+        </div>
+
+        <div class="control-section">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">字体设置</h3>
+            <div class="space-y-2">
+                <div>
+                    <label class="text-xs text-gray-500">主标题字体</label>
+                    <select id="titleFont" onchange="changeFont('title')" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm mb-1">
+                        <option value="'Noto Sans SC', sans-serif">思源黑体（默认）</option>
+                        <option value="'Noto Serif SC', serif">思源宋体</option>
+                        <option value="'ZCOOL KuaiLe', cursive">站酷快乐体</option>
+                        <option value="'Ma Shan Zheng', cursive">马善政毛笔</option>
+                        <option value="'Liu Jian Mao Cao', cursive">刘建毛笔</option>
+                        <option value="'Long Cang', cursive">龙藏体</option>
+                    </select>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs text-gray-500">颜色</label>
+                        <input type="color" id="titleColor" value="#ffffff" onchange="changeColor('title')" class="w-8 h-8 border border-gray-300 rounded cursor-pointer">
+                        <button onclick="resetColor('title')" class="text-xs text-gray-500 hover:text-gray-700">重置</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500">副标题字体</label>
+                    <select id="subFont" onchange="changeFont('sub')" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm mb-1">
+                        <option value="'Noto Sans SC', sans-serif">思源黑体（默认）</option>
+                        <option value="'Noto Serif SC', serif">思源宋体</option>
+                        <option value="'ZCOOL KuaiLe', cursive">站酷快乐体</option>
+                        <option value="'Ma Shan Zheng', cursive">马善政毛笔</option>
+                        <option value="'Liu Jian Mao Cao', cursive">刘建毛笔</option>
+                        <option value="'Long Cang', cursive">龙藏体</option>
+                    </select>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs text-gray-500">颜色</label>
+                        <input type="color" id="subColor" value="#ffffff" onchange="changeColor('sub')" class="w-8 h-8 border border-gray-300 rounded cursor-pointer">
+                        <button onclick="resetColor('sub')" class="text-xs text-gray-500 hover:text-gray-700">重置</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500">月份标签字体</label>
+                    <select id="monthFont" onchange="changeFont('month')" class="w-full px-2 py-1.5 border border-gray-300 rounded text-sm mb-1">
+                        <option value="'Long Cang', cursive">龙藏体（默认）</option>
+                        <option value="'Noto Sans SC', sans-serif">思源黑体</option>
+                        <option value="'Noto Serif SC', serif">思源宋体</option>
+                        <option value="'ZCOOL KuaiLe', cursive">站酷快乐体</option>
+                        <option value="'Ma Shan Zheng', cursive">马善政毛笔</option>
+                        <option value="'Liu Jian Mao Cao', cursive">刘建毛笔</option>
+                    </select>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs text-gray-500">颜色</label>
+                        <input type="color" id="monthColor" value="#ffffff" onchange="changeColor('month')" class="w-8 h-8 border border-gray-300 rounded cursor-pointer">
+                        <button onclick="resetColor('month')" class="text-xs text-gray-500 hover:text-gray-700">重置</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-section">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">操作</h3>
+            <div class="space-y-2">
+                <button onclick="saveProgress()" class="btn btn-secondary w-full">💾 保存进度</button>
+                <button onclick="clearAll()" class="btn btn-secondary w-full">🗑️ 清空所有</button>
+                <button onclick="generateImage()" class="btn btn-success w-full">📷 生成图片</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 隐藏的API配置（部署时修改） -->
+    <script>
+        // 部署时修改这里的API地址
+        const API_BASE_URL = 'https://doubanbook.zeabur.app';
+    </script>
+
+    <!-- 添加书籍弹窗 -->
+    <div id="addBookModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="text-xl font-semibold mb-4" id="modalTitle">添加书籍</h3>
+
+            <!-- 选项卡 -->
+            <div class="flex border-b border-gray-200 mb-4">
+                <button id="tabSearch" onclick="switchTab('search')" class="flex-1 py-2 text-sm font-medium text-blue-600 border-b-2 border-blue-600">
+                    🔍 搜索
+                </button>
+                <button id="tabUpload" onclick="switchTab('upload')" class="flex-1 py-2 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:text-gray-700">
+                    📤 本地上传
+                </button>
+            </div>
+
+            <!-- 搜索面板 -->
+            <div id="searchPanel">
+                <input type="text"
+                    id="bookQuery"
+                    placeholder="输入书名或ISBN..."
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onkeypress="handleBookInput(event)">
+                <p class="text-sm text-gray-500 mb-4">按回车搜索</p>
+            </div>
+
+            <!-- 本地上传面板 -->
+            <div id="uploadPanel" class="hidden">
+                <input type="text"
+                    id="localBookTitle"
+                    placeholder="输入书名（可选）..."
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <input type="file"
+                    id="localBookCover"
+                    accept="image/*"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onchange="handleLocalUpload(event)">
+                <p class="text-sm text-gray-500 mb-4">选择封面图片</p>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="closeModal()" class="btn btn-secondary flex-1">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局状态
+        const state = {
+            mainTitle: '',
+            subTitle: '',
+            months: {},
+            apiUrl: 'https://your-api.railway.app',
+            currentMonth: null,
+            titleFont: "'Noto Sans SC', sans-serif",
+            subFont: "'Noto Sans SC', sans-serif",
+            monthFont: "'Long Cang', cursive",
+            theme: 'theme-dark',
+            customBg: null,  // 自定义背景图片
+            titleColor: null,  // 主标题自定义颜色
+            subColor: null,    // 副标题自定义颜色
+            monthColor: null   // 月份标签自定义颜色
+        };
+
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProgress();
+            renderPreview();
+            document.getElementById('titleFont').value = state.titleFont;
+            document.getElementById('subFont').value = state.subFont;
+            document.getElementById('monthFont').value = state.monthFont || "'Long Cang', cursive";
+            document.getElementById('themeSelect').value = state.theme || 'theme-dark';
+            applyTheme(state.theme || 'theme-dark');
+            updateMonthFont();
+
+            // 初始化颜色选择器
+            if (state.titleColor) document.getElementById('titleColor').value = state.titleColor;
+            if (state.subColor) document.getElementById('subColor').value = state.subColor;
+            if (state.monthColor) document.getElementById('monthColor').value = state.monthColor;
+
+            // 应用颜色
+            applyDefaultTitleColor();
+            applyDefaultSubColor();
+            applyDefaultMonthColor();
+        });
+
+        // 切换主题
+        function changeTheme() {
+            const theme = document.getElementById('themeSelect').value;
+            state.theme = theme;
+            applyTheme(theme);
+
+            // 如果是自定义主题，显示上传按钮
+            const uploadBtn = document.getElementById('uploadBgBtn');
+            if (theme === 'theme-custom') {
+                uploadBtn.classList.remove('hidden');
+            } else {
+                uploadBtn.classList.add('hidden');
+            }
+
+            // 切换主题时重新应用颜色
+            applyDefaultTitleColor();
+            applyDefaultSubColor();
+            applyDefaultMonthColor();
+
+            saveProgress();
+        }
+
+        // 应用主题
+        function applyTheme(theme) {
+            const container = document.getElementById('preview-container');
+            // 移除所有主题类
+            container.classList.remove(
+                'theme-dark', 'theme-warm', 'theme-cool', 'theme-forest',
+                'theme-sunset', 'theme-minimal', 'theme-vintage', 'theme-ocean', 'theme-custom'
+            );
+            // 添加新主题类
+            container.classList.add(theme);
+
+            // 如果有自定义背景图片，应用它
+            if (theme === 'theme-custom' && state.customBg) {
+                container.style.backgroundImage = `url(${state.customBg})`;
+            } else if (theme !== 'theme-custom') {
+                container.style.backgroundImage = '';
+            }
+        }
+
+        // 处理自定义背景上传
+        function handleCustomBg(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                state.customBg = e.target.result;
+                applyTheme('theme-custom');
+                saveProgress();
+                showToast('背景图片已上传', 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 切换字体
+        function changeFont(type) {
+            if (type === 'title') {
+                state.titleFont = document.getElementById('titleFont').value;
+                document.getElementById('mainTitle').style.fontFamily = state.titleFont;
+            } else if (type === 'sub') {
+                state.subFont = document.getElementById('subFont').value;
+                document.getElementById('subTitle').style.fontFamily = state.subFont;
+            } else if (type === 'month') {
+                state.monthFont = document.getElementById('monthFont').value;
+                updateMonthFont();
+            }
+            saveProgress();
+        }
+
+        // 切换颜色
+        function changeColor(type) {
+            if (type === 'title') {
+                // 从桌面或移动端控件获取值
+                const desktopColor = document.getElementById('titleColor');
+                const mobileColor = document.getElementById('mobileTitleColor');
+                const colorValue = desktopColor.value || mobileColor.value;
+
+                state.titleColor = colorValue;
+                document.getElementById('mainTitle').style.color = state.titleColor;
+                document.getElementById('mainTitle').style.setProperty('color', state.titleColor, 'important');
+
+                // 同步两个控件
+                if (desktopColor) desktopColor.value = colorValue;
+                if (mobileColor) mobileColor.value = colorValue;
+            } else if (type === 'sub') {
+                const desktopColor = document.getElementById('subColor');
+                const mobileColor = document.getElementById('mobileSubColor');
+                const colorValue = desktopColor.value || mobileColor.value;
+
+                state.subColor = colorValue;
+                document.getElementById('subTitle').style.color = state.subColor;
+                document.getElementById('subTitle').style.setProperty('color', state.subColor, 'important');
+
+                if (desktopColor) desktopColor.value = colorValue;
+                if (mobileColor) mobileColor.value = colorValue;
+            } else if (type === 'month') {
+                const desktopColor = document.getElementById('monthColor');
+                const mobileColor = document.getElementById('mobileMonthColor');
+                const colorValue = desktopColor.value || mobileColor.value;
+
+                state.monthColor = colorValue;
+                updateMonthColor();
+
+                if (desktopColor) desktopColor.value = colorValue;
+                if (mobileColor) mobileColor.value = colorValue;
+            }
+            saveProgress();
+        }
+
+        // 重置颜色
+        function resetColor(type) {
+            if (type === 'title') {
+                state.titleColor = null;
+                const desktopColor = document.getElementById('titleColor');
+                const mobileColor = document.getElementById('mobileTitleColor');
+                if (desktopColor) desktopColor.value = '#ffffff';
+                if (mobileColor) mobileColor.value = '#ffffff';
+                document.getElementById('mainTitle').style.removeProperty('color');
+                applyDefaultTitleColor();
+            } else if (type === 'sub') {
+                state.subColor = null;
+                const desktopColor = document.getElementById('subColor');
+                const mobileColor = document.getElementById('mobileSubColor');
+                if (desktopColor) desktopColor.value = '#ffffff';
+                if (mobileColor) mobileColor.value = '#ffffff';
+                document.getElementById('subTitle').style.removeProperty('color');
+                applyDefaultSubColor();
+            } else if (type === 'month') {
+                state.monthColor = null;
+                const desktopColor = document.getElementById('monthColor');
+                const mobileColor = document.getElementById('mobileMonthColor');
+                if (desktopColor) desktopColor.value = '#ffffff';
+                if (mobileColor) mobileColor.value = '#ffffff';
+                applyDefaultMonthColor();
+            }
+            saveProgress();
+            showToast('颜色已重置', 'info');
+        }
+
+        // 应用默认标题颜色（根据主题）
+        function applyDefaultTitleColor() {
+            const container = document.getElementById('preview-container');
+            const isDarkTheme = container.classList.contains('theme-dark') ||
+                               container.classList.contains('theme-forest') ||
+                               container.classList.contains('theme-sunset') ||
+                               container.classList.contains('theme-ocean') ||
+                               container.classList.contains('theme-custom');
+
+            if (state.titleColor) {
+                document.getElementById('mainTitle').style.setProperty('color', state.titleColor, 'important');
+            } else {
+                document.getElementById('mainTitle').style.removeProperty('color');
+            }
+        }
+
+        // 应用默认副标题颜色（根据主题）
+        function applyDefaultSubColor() {
+            const container = document.getElementById('preview-container');
+            const isDarkTheme = container.classList.contains('theme-dark') ||
+                               container.classList.contains('theme-forest') ||
+                               container.classList.contains('theme-sunset') ||
+                               container.classList.contains('theme-ocean') ||
+                               container.classList.contains('theme-custom');
+
+            if (state.subColor) {
+                document.getElementById('subTitle').style.setProperty('color', state.subColor, 'important');
+            } else {
+                document.getElementById('subTitle').style.removeProperty('color');
+            }
+        }
+
+        // 应用默认月份颜色（根据主题）
+        function applyDefaultMonthColor() {
+            const container = document.getElementById('preview-container');
+            const isDarkTheme = container.classList.contains('theme-dark') ||
+                               container.classList.contains('theme-forest') ||
+                               container.classList.contains('theme-sunset') ||
+                               container.classList.contains('theme-ocean') ||
+                               container.classList.contains('theme-custom');
+
+            const monthLabels = document.querySelectorAll('.month-label');
+            monthLabels.forEach(label => {
+                if (state.monthColor) {
+                    label.style.color = state.monthColor;
+                } else {
+                    label.style.color = isDarkTheme ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.75)';
+                }
+            });
+        }
+
+        // 更新月份颜色
+        function updateMonthColor() {
+            applyDefaultMonthColor();
+        }
+
+        // 更新月份字体
+        function updateMonthFont() {
+            const monthLabels = document.querySelectorAll('.month-label');
+            monthLabels.forEach(label => {
+                label.style.fontFamily = state.monthFont;
+            });
+        }
+
+        // 渲染预览
+        function renderPreview() {
+            document.getElementById('mainTitle').value = state.mainTitle;
+            document.getElementById('mainTitle').style.fontFamily = state.titleFont;
+            document.getElementById('subTitle').value = state.subTitle;
+            document.getElementById('subTitle').style.fontFamily = state.subFont;
+
+            const container = document.getElementById('previewBooks');
+
+            // 计算月份标签颜色
+            const previewContainer = document.getElementById('preview-container');
+            const isDarkTheme = previewContainer.classList.contains('theme-dark') ||
+                               previewContainer.classList.contains('theme-forest') ||
+                               previewContainer.classList.contains('theme-sunset') ||
+                               previewContainer.classList.contains('theme-ocean') ||
+                               previewContainer.classList.contains('theme-custom');
+            const defaultMonthColor = isDarkTheme ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.75)';
+            const monthColorStyle = state.monthColor ? `color: ${state.monthColor}` : `color: ${defaultMonthColor}`;
+
+            container.innerHTML = months.map(month => {
+                const books = state.months[month] || [];
+                const canAddMore = books.length < 12;
+
+                return `
+                    <div class="month-row">
+                        <div class="month-label" style="font-family: ${state.monthFont}; ${monthColorStyle}">${month}</div>
+                        <div class="books-container">
+                            ${books.map((book, index) => `
+                                <div class="added-book">
+                                    <img src="${book.cover}" alt="${book.title}" title="${book.title}">
+                                    <div class="remove-icon" onclick="removeBook('${month}', ${index})">×</div>
+                                </div>
+                            `).join('')}
+                            ${canAddMore ? `
+                                <div class="add-book-slot" onclick="openAddModal('${month}')">
+                                    <span class="plus-icon">+</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 打开添加书籍弹窗
+        function openAddModal(month) {
+            state.currentMonth = month;
+            document.getElementById('modalTitle').textContent = `添加书籍 - ${month}`;
+            document.getElementById('bookQuery').value = '';
+            document.getElementById('localBookTitle').value = '';
+            document.getElementById('localBookCover').value = '';
+            document.getElementById('addBookModal').classList.add('active');
+            document.getElementById('bookQuery').focus();
+
+            // 重置到搜索标签
+            switchTab('search');
+        }
+
+        // 关闭弹窗
+        function closeModal() {
+            document.getElementById('addBookModal').classList.remove('active');
+            state.currentMonth = null;
+        }
+
+        // 切换选项卡
+        function switchTab(tab) {
+            const searchPanel = document.getElementById('searchPanel');
+            const uploadPanel = document.getElementById('uploadPanel');
+            const tabSearch = document.getElementById('tabSearch');
+            const tabUpload = document.getElementById('tabUpload');
+
+            if (tab === 'search') {
+                searchPanel.classList.remove('hidden');
+                uploadPanel.classList.add('hidden');
+                tabSearch.classList.add('text-blue-600', 'border-blue-600');
+                tabSearch.classList.remove('text-gray-500', 'border-transparent');
+                tabUpload.classList.remove('text-blue-600', 'border-blue-600');
+                tabUpload.classList.add('text-gray-500', 'border-transparent');
+            } else {
+                searchPanel.classList.add('hidden');
+                uploadPanel.classList.remove('hidden');
+                tabUpload.classList.add('text-blue-600', 'border-blue-600');
+                tabUpload.classList.remove('text-gray-500', 'border-transparent');
+                tabSearch.classList.remove('text-blue-600', 'border-blue-600');
+                tabSearch.classList.add('text-gray-500', 'border-transparent');
+            }
+        }
+
+        // 处理本地上传
+        function handleLocalUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const month = state.currentMonth;
+            if (!month) return;
+
+            const title = document.getElementById('localBookTitle').value.trim() || '本地书籍';
+
+            // 显示加载中
+            const books = state.months[month] || [];
+            state.months[month] = [...books, { loading: true }];
+            renderPreview();
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // 添加书籍
+                state.months[month] = [...books, {
+                    title: title,
+                    author: '本地上传',
+                    cover: e.target.result,
+                    isbn: ''
+                }];
+
+                renderPreview();
+                saveProgress();
+                showToast(`已添加：《${title}》`, 'success');
+                closeModal();
+
+                // 清空输入
+                document.getElementById('localBookTitle').value = '';
+                document.getElementById('localBookCover').value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 处理书籍输入
+        async function handleBookInput(event) {
+            if (event.key === 'Enter') {
+                const query = event.target.value.trim();
+                if (!query) return;
+
+                await addBook(query);
+                closeModal();
+            }
+        }
+
+        // 添加书籍
+        async function addBook(query) {
+            const month = state.currentMonth;
+
+            if (!month) return;
+
+            // 显示加载中
+            const books = state.months[month] || [];
+            state.months[month] = [...books, { loading: true }];
+            renderPreview();
+
+            showToast('正在搜索书籍...', 'info');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/search`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+
+                if (!response.ok) throw new Error('搜索失败');
+
+                const data = await response.json();
+
+                if (!data.cover_url) {
+                    showToast('未找到书籍封面', 'error');
+                    // 移除加载中
+                    state.months[month] = books;
+                    renderPreview();
+                    return;
+                }
+
+                // 添加书籍
+                state.months[month] = [...books, {
+                    title: data.title,
+                    author: data.author,
+                    cover: data.cover_url,
+                    isbn: data.isbn
+                }];
+
+                renderPreview();
+                saveProgress();
+                showToast(`已添加：《${data.title}》`, 'success');
+
+            } catch (error) {
+                console.error(error);
+                showToast('搜索失败，请稍后重试', 'error');
+                // 移除加载中
+                state.months[month] = books;
+                renderPreview();
+            }
+        }
+
+        // 删除书籍
+        function removeBook(month, index) {
+            state.months[month].splice(index, 1);
+            renderPreview();
+            saveProgress();
+        }
+
+        // 更新标题
+        function updateTitle() {
+            state.mainTitle = document.getElementById('mainTitle').value;
+            saveProgress();
+        }
+
+        function updateSubtitle() {
+            state.subTitle = document.getElementById('subTitle').value;
+            saveProgress();
+        }
+
+        // 保存进度
+        function saveProgress() {
+            localStorage.setItem('bookTrackerState', JSON.stringify(state));
+        }
+
+        // 加载进度
+        function loadProgress() {
+            const saved = localStorage.getItem('bookTrackerState');
+            if (saved) {
+                const loaded = JSON.parse(saved);
+                Object.assign(state, loaded);
+            }
+        }
+
+        // 清空所有
+        function clearAll() {
+            if (!confirm('确定要清空所有数据吗？')) return;
+
+            state.mainTitle = '';
+            state.subTitle = '';
+            state.months = {};
+
+            renderPreview();
+            saveProgress();
+            showToast('已清空所有数据', 'info');
+        }
+
+        // 生成图片
+        async function generateImage() {
+            const container = document.getElementById('preview-container');
+
+            // 临时隐藏所有添加按钮
+            const addButtons = container.querySelectorAll('.add-book-slot');
+            addButtons.forEach(btn => btn.style.display = 'none');
+
+            showToast('正在生成图片...', 'info');
+
+            try {
+                const canvas = await html2canvas(container, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#f5f7fa'
+                });
+
+                const link = document.createElement('a');
+                link.download = `读书记录_${new Date().getTime()}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                showToast('图片生成成功！', 'success');
+
+            } catch (error) {
+                console.error(error);
+                showToast('图片生成失败，请重试', 'error');
+            } finally {
+                // 恢复显示添加按钮
+                addButtons.forEach(btn => btn.style.display = 'flex');
+            }
+        }
+
+        // Toast通知
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // 点击弹窗外部关闭
+        document.getElementById('addBookModal').addEventListener('click', (e) => {
+            if (e.target.id === 'addBookModal') {
+                closeModal();
+            }
+        });
+
+        // ==================== 移动端控制函数 ====================
+
+        // 切换移动端抽屉
+        function toggleMobileDrawer() {
+            const drawer = document.getElementById('mobileDrawer');
+            drawer.classList.toggle('collapsed');
+        }
+
+        // 切换移动端帮助弹窗
+        function toggleMobileHelp() {
+            const modal = document.getElementById('mobileHelpModal');
+            modal.classList.toggle('active');
+        }
+
+        // 点击移动端帮助弹窗外部关闭
+        function closeMobileHelpOutside(event) {
+            if (event.target.id === 'mobileHelpModal') {
+                toggleMobileHelp();
+            }
+        }
+
+        // 同步桌面和移动端控件状态
+        function syncMobileControls() {
+            // 同步主题选择
+            const desktopTheme = document.getElementById('themeSelect').value;
+            const mobileTheme = document.getElementById('mobileThemeSelect');
+            if (mobileTheme) mobileTheme.value = desktopTheme;
+
+            // 同步字体选择
+            const desktopTitleFont = document.getElementById('titleFont').value;
+            const mobileTitleFont = document.getElementById('mobileTitleFont');
+            if (mobileTitleFont) mobileTitleFont.value = desktopTitleFont;
+
+            const desktopSubFont = document.getElementById('subFont').value;
+            const mobileSubFont = document.getElementById('mobileSubFont');
+            if (mobileSubFont) mobileSubFont.value = desktopSubFont;
+
+            const desktopMonthFont = document.getElementById('monthFont').value;
+            const mobileMonthFont = document.getElementById('mobileMonthFont');
+            if (mobileMonthFont) mobileMonthFont.value = desktopMonthFont;
+
+            // 同步颜色选择
+            const desktopTitleColor = document.getElementById('titleColor').value;
+            const mobileTitleColor = document.getElementById('mobileTitleColor');
+            if (mobileTitleColor) mobileTitleColor.value = desktopTitleColor;
+
+            const desktopSubColor = document.getElementById('subColor').value;
+            const mobileSubColor = document.getElementById('mobileSubColor');
+            if (mobileSubColor) mobileSubColor.value = desktopSubColor;
+
+            const desktopMonthColor = document.getElementById('monthColor').value;
+            const mobileMonthColor = document.getElementById('mobileMonthColor');
+            if (mobileMonthColor) mobileMonthColor.value = desktopMonthColor;
+
+            // 同步自定义背景上传按钮状态
+            const uploadBtn = document.getElementById('uploadBgBtn');
+            const mobileUploadBtn = document.getElementById('mobileUploadBgBtn');
+            if (uploadBtn && mobileUploadBtn) {
+                if (uploadBtn.classList.contains('hidden')) {
+                    mobileUploadBtn.classList.add('hidden');
+                } else {
+                    mobileUploadBtn.classList.remove('hidden');
+                }
+            }
+        }
+
+        // 在页面加载和状态改变时同步控件
+        const originalChangeTheme = changeTheme;
+        changeTheme = function() {
+            originalChangeTheme();
+            syncMobileControls();
+        };
+
+        const originalChangeFont = changeFont;
+        changeFont = function(type) {
+            originalChangeFont(type);
+            syncMobileControls();
+        };
+
+        const originalChangeColor = changeColor;
+        changeColor = function(type) {
+            originalChangeColor(type);
+            syncMobileControls();
+        };
+
+        const originalResetColor = resetColor;
+        resetColor = function(type) {
+            originalResetColor(type);
+            syncMobileControls();
+        };
+
+        // 页面加载时同步
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(syncMobileControls, 100);
+        });
+    </script>
+</body>
+</html>
