@@ -1399,13 +1399,34 @@
             const mobileSubColor = document.getElementById('mobileSubColor');
             const mobileMonthColor = document.getElementById('mobileMonthColor');
 
-            if (mobileTitleFont) mobileTitleFont.value = state.titleFont;
-            if (mobileSubFont) mobileSubFont.value = state.subFont;
-            if (mobileMonthFont) mobileMonthFont.value = state.monthFont || "'Long Cang', cursive";
-            if (mobileTheme) mobileTheme.value = state.theme || 'theme-dark';
-            if (mobileTitleColor && state.titleColor) mobileTitleColor.value = state.titleColor;
-            if (mobileSubColor && state.subColor) mobileSubColor.value = state.subColor;
-            if (mobileMonthColor && state.monthColor) mobileMonthColor.value = state.monthColor;
+            if (mobileTitleFont) {
+                mobileTitleFont.value = state.titleFont;
+                mobileTitleFont.addEventListener('change', () => changeFont('title'));
+            }
+            if (mobileSubFont) {
+                mobileSubFont.value = state.subFont;
+                mobileSubFont.addEventListener('change', () => changeFont('sub'));
+            }
+            if (mobileMonthFont) {
+                mobileMonthFont.value = state.monthFont || "'Long Cang', cursive";
+                mobileMonthFont.addEventListener('change', () => changeFont('month'));
+            }
+            if (mobileTheme) {
+                mobileTheme.value = state.theme || 'theme-dark';
+                mobileTheme.addEventListener('change', () => changeTheme());
+            }
+            if (mobileTitleColor) {
+                if (state.titleColor) mobileTitleColor.value = state.titleColor;
+                mobileTitleColor.addEventListener('change', () => changeColor('title'));
+            }
+            if (mobileSubColor) {
+                if (state.subColor) mobileSubColor.value = state.subColor;
+                mobileSubColor.addEventListener('change', () => changeColor('sub'));
+            }
+            if (mobileMonthColor) {
+                if (state.monthColor) mobileMonthColor.value = state.monthColor;
+                mobileMonthColor.addEventListener('change', () => changeColor('month'));
+            }
 
             // 应用颜色
             applyDefaultTitleColor();
@@ -1419,6 +1440,10 @@
             const desktopTheme = document.getElementById('themeSelect');
             const mobileTheme = document.getElementById('mobileThemeSelect');
 
+            console.log('changeTheme called');
+            console.log('desktopTheme:', desktopTheme);
+            console.log('mobileTheme:', mobileTheme);
+
             // 安全获取主题值
             let theme = 'theme-dark'; // 默认值
             if (desktopTheme && desktopTheme.value) {
@@ -1426,6 +1451,8 @@
             } else if (mobileTheme && mobileTheme.value) {
                 theme = mobileTheme.value;
             }
+
+            console.log('selected theme:', theme);
 
             state.theme = theme;
             applyTheme(theme);
