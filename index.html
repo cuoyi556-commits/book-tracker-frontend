@@ -1418,7 +1418,7 @@
             // 从桌面或移动端控件获取主题值
             const desktopTheme = document.getElementById('themeSelect');
             const mobileTheme = document.getElementById('mobileThemeSelect');
-            const theme = desktopTheme.value || mobileTheme.value;
+            const theme = (desktopTheme?.value) || (mobileTheme?.value);
 
             state.theme = theme;
             applyTheme(theme);
@@ -1485,7 +1485,7 @@
             if (type === 'title') {
                 const desktopFont = document.getElementById('titleFont');
                 const mobileFont = document.getElementById('mobileTitleFont');
-                const fontValue = desktopFont.value || mobileFont.value;
+                const fontValue = (desktopFont?.value) || (mobileFont?.value);
 
                 state.titleFont = fontValue;
                 document.getElementById('mainTitle').style.fontFamily = state.titleFont;
@@ -1496,7 +1496,7 @@
             } else if (type === 'sub') {
                 const desktopFont = document.getElementById('subFont');
                 const mobileFont = document.getElementById('mobileSubFont');
-                const fontValue = desktopFont.value || mobileFont.value;
+                const fontValue = (desktopFont?.value) || (mobileFont?.value);
 
                 state.subFont = fontValue;
                 document.getElementById('subTitle').style.fontFamily = state.subFont;
@@ -1506,7 +1506,7 @@
             } else if (type === 'month') {
                 const desktopFont = document.getElementById('monthFont');
                 const mobileFont = document.getElementById('mobileMonthFont');
-                const fontValue = desktopFont.value || mobileFont.value;
+                const fontValue = (desktopFont?.value) || (mobileFont?.value);
 
                 state.monthFont = fontValue;
                 updateMonthFont();
@@ -1523,7 +1523,7 @@
                 // 从桌面或移动端控件获取值
                 const desktopColor = document.getElementById('titleColor');
                 const mobileColor = document.getElementById('mobileTitleColor');
-                const colorValue = desktopColor.value || mobileColor.value;
+                const colorValue = (desktopColor?.value) || (mobileColor?.value);
 
                 state.titleColor = colorValue;
                 document.getElementById('mainTitle').style.color = state.titleColor;
@@ -1535,7 +1535,7 @@
             } else if (type === 'sub') {
                 const desktopColor = document.getElementById('subColor');
                 const mobileColor = document.getElementById('mobileSubColor');
-                const colorValue = desktopColor.value || mobileColor.value;
+                const colorValue = (desktopColor?.value) || (mobileColor?.value);
 
                 state.subColor = colorValue;
                 document.getElementById('subTitle').style.color = state.subColor;
@@ -1546,7 +1546,7 @@
             } else if (type === 'month') {
                 const desktopColor = document.getElementById('monthColor');
                 const mobileColor = document.getElementById('mobileMonthColor');
-                const colorValue = desktopColor.value || mobileColor.value;
+                const colorValue = (desktopColor?.value) || (mobileColor?.value);
 
                 state.monthColor = colorValue;
                 updateMonthColor();
