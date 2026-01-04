@@ -1141,7 +1141,7 @@
             <div class="mobile-control-section">
                 <h4>背景主题</h4>
                 <label>选择主题</label>
-                <select id="mobileThemeSelect" onchange="changeTheme()">
+                <select id="mobileThemeSelect">
                     <option value="theme-dark">🌑 暗夜黑</option>
                     <option value="theme-warm">🌅 温暖米</option>
                     <option value="theme-cool">❄️ 清凉蓝</option>
@@ -1160,7 +1160,7 @@
             <div class="mobile-control-section">
                 <h4>字体设置</h4>
                 <label>主标题字体</label>
-                <select id="mobileTitleFont" onchange="changeFont('title')">
+                <select id="mobileTitleFont">
                     <option value="'Noto Sans SC', sans-serif">思源黑体（默认）</option>
                     <option value="'Noto Serif SC', serif">思源宋体</option>
                     <option value="'ZCOOL KuaiLe', cursive">站酷快乐体</option>
@@ -1170,12 +1170,12 @@
                 </select>
                 <div class="mobile-color-row">
                     <label>颜色</label>
-                    <input type="color" id="mobileTitleColor" value="#ffffff" onchange="changeColor('title')">
+                    <input type="color" id="mobileTitleColor" value="#ffffff">
                     <button class="mobile-reset-btn" onclick="resetColor('title')">重置</button>
                 </div>
 
                 <label>副标题字体</label>
-                <select id="mobileSubFont" onchange="changeFont('sub')">
+                <select id="mobileSubFont">
                     <option value="'Noto Sans SC', sans-serif">思源黑体（默认）</option>
                     <option value="'Noto Serif SC', serif">思源宋体</option>
                     <option value="'ZCOOL KuaiLe', cursive">站酷快乐体</option>
@@ -1185,12 +1185,12 @@
                 </select>
                 <div class="mobile-color-row">
                     <label>颜色</label>
-                    <input type="color" id="mobileSubColor" value="#ffffff" onchange="changeColor('sub')">
+                    <input type="color" id="mobileSubColor" value="#ffffff">
                     <button class="mobile-reset-btn" onclick="resetColor('sub')">重置</button>
                 </div>
 
                 <label>月份标签字体</label>
-                <select id="mobileMonthFont" onchange="changeFont('month')">
+                <select id="mobileMonthFont">
                     <option value="'Long Cang', cursive">龙藏体（默认）</option>
                     <option value="'Noto Sans SC', sans-serif">思源黑体</option>
                     <option value="'Noto Serif SC', serif">思源宋体</option>
@@ -1200,7 +1200,7 @@
                 </select>
                 <div class="mobile-color-row">
                     <label>颜色</label>
-                    <input type="color" id="mobileMonthColor" value="#ffffff" onchange="changeColor('month')">
+                    <input type="color" id="mobileMonthColor" value="#ffffff">
                     <button class="mobile-reset-btn" onclick="resetColor('month')">重置</button>
                 </div>
             </div>
@@ -1401,31 +1401,31 @@
 
             if (mobileTitleFont) {
                 mobileTitleFont.value = state.titleFont;
-                mobileTitleFont.addEventListener('change', () => changeFont('title'));
+                mobileTitleFont.addEventListener('change', (e) => changeFont('title', e));
             }
             if (mobileSubFont) {
                 mobileSubFont.value = state.subFont;
-                mobileSubFont.addEventListener('change', () => changeFont('sub'));
+                mobileSubFont.addEventListener('change', (e) => changeFont('sub', e));
             }
             if (mobileMonthFont) {
                 mobileMonthFont.value = state.monthFont || "'Long Cang', cursive";
-                mobileMonthFont.addEventListener('change', () => changeFont('month'));
+                mobileMonthFont.addEventListener('change', (e) => changeFont('month', e));
             }
             if (mobileTheme) {
                 mobileTheme.value = state.theme || 'theme-dark';
-                mobileTheme.addEventListener('change', () => changeTheme());
+                mobileTheme.addEventListener('change', (e) => changeTheme(e));
             }
             if (mobileTitleColor) {
                 if (state.titleColor) mobileTitleColor.value = state.titleColor;
-                mobileTitleColor.addEventListener('change', () => changeColor('title'));
+                mobileTitleColor.addEventListener('change', (e) => changeColor('title', e));
             }
             if (mobileSubColor) {
                 if (state.subColor) mobileSubColor.value = state.subColor;
-                mobileSubColor.addEventListener('change', () => changeColor('sub'));
+                mobileSubColor.addEventListener('change', (e) => changeColor('sub', e));
             }
             if (mobileMonthColor) {
                 if (state.monthColor) mobileMonthColor.value = state.monthColor;
-                mobileMonthColor.addEventListener('change', () => changeColor('month'));
+                mobileMonthColor.addEventListener('change', (e) => changeColor('month', e));
             }
 
             // 应用颜色
@@ -1435,7 +1435,7 @@
         });
 
         // 切换主题
-        function changeTheme() {
+        function changeTheme(event) {
             // 从桌面或移动端控件获取主题值
             const desktopTheme = document.getElementById('themeSelect');
             const mobileTheme = document.getElementById('mobileThemeSelect');
@@ -1443,10 +1443,15 @@
             console.log('changeTheme called');
             console.log('desktopTheme:', desktopTheme);
             console.log('mobileTheme:', mobileTheme);
+            console.log('event.target:', event?.target);
 
-            // 安全获取主题值
+            // 安全获取主题值 - 优先使用事件触发者
             let theme = 'theme-dark'; // 默认值
-            if (desktopTheme && desktopTheme.value) {
+
+            // 如果有事件对象，直接从事件触发者获取
+            if (event && event.target && event.target.value) {
+                theme = event.target.value;
+            } else if (desktopTheme && desktopTheme.value) {
                 theme = desktopTheme.value;
             } else if (mobileTheme && mobileTheme.value) {
                 theme = mobileTheme.value;
@@ -1515,15 +1520,17 @@
         }
 
         // 切换字体
-        function changeFont(type) {
+        function changeFont(type, event) {
             let fontValue;
 
             if (type === 'title') {
                 const desktopFont = document.getElementById('titleFont');
                 const mobileFont = document.getElementById('mobileTitleFont');
 
-                // 安全获取字体值
-                if (desktopFont && desktopFont.value) {
+                // 安全获取字体值 - 优先使用事件触发者
+                if (event && event.target && event.target.value) {
+                    fontValue = event.target.value;
+                } else if (desktopFont && desktopFont.value) {
                     fontValue = desktopFont.value;
                 } else if (mobileFont && mobileFont.value) {
                     fontValue = mobileFont.value;
@@ -1541,8 +1548,10 @@
                 const desktopFont = document.getElementById('subFont');
                 const mobileFont = document.getElementById('mobileSubFont');
 
-                // 安全获取字体值
-                if (desktopFont && desktopFont.value) {
+                // 安全获取字体值 - 优先使用事件触发者
+                if (event && event.target && event.target.value) {
+                    fontValue = event.target.value;
+                } else if (desktopFont && desktopFont.value) {
                     fontValue = desktopFont.value;
                 } else if (mobileFont && mobileFont.value) {
                     fontValue = mobileFont.value;
@@ -1559,8 +1568,10 @@
                 const desktopFont = document.getElementById('monthFont');
                 const mobileFont = document.getElementById('mobileMonthFont');
 
-                // 安全获取字体值
-                if (desktopFont && desktopFont.value) {
+                // 安全获取字体值 - 优先使用事件触发者
+                if (event && event.target && event.target.value) {
+                    fontValue = event.target.value;
+                } else if (desktopFont && desktopFont.value) {
                     fontValue = desktopFont.value;
                 } else if (mobileFont && mobileFont.value) {
                     fontValue = mobileFont.value;
@@ -1578,7 +1589,7 @@
         }
 
         // 切换颜色
-        function changeColor(type) {
+        function changeColor(type, event) {
             let colorValue;
 
             if (type === 'title') {
@@ -1586,8 +1597,10 @@
                 const desktopColor = document.getElementById('titleColor');
                 const mobileColor = document.getElementById('mobileTitleColor');
 
-                // 安全获取颜色值
-                if (desktopColor && desktopColor.value) {
+                // 安全获取颜色值 - 优先使用事件触发者
+                if (event && event.target && event.target.value) {
+                    colorValue = event.target.value;
+                } else if (desktopColor && desktopColor.value) {
                     colorValue = desktopColor.value;
                 } else if (mobileColor && mobileColor.value) {
                     colorValue = mobileColor.value;
@@ -1606,8 +1619,10 @@
                 const desktopColor = document.getElementById('subColor');
                 const mobileColor = document.getElementById('mobileSubColor');
 
-                // 安全获取颜色值
-                if (desktopColor && desktopColor.value) {
+                // 安全获取颜色值 - 优先使用事件触发者
+                if (event && event.target && event.target.value) {
+                    colorValue = event.target.value;
+                } else if (desktopColor && desktopColor.value) {
                     colorValue = desktopColor.value;
                 } else if (mobileColor && mobileColor.value) {
                     colorValue = mobileColor.value;
@@ -1625,8 +1640,10 @@
                 const desktopColor = document.getElementById('monthColor');
                 const mobileColor = document.getElementById('mobileMonthColor');
 
-                // 安全获取颜色值
-                if (desktopColor && desktopColor.value) {
+                // 安全获取颜色值 - 优先使用事件触发者
+                if (event && event.target && event.target.value) {
+                    colorValue = event.target.value;
+                } else if (desktopColor && desktopColor.value) {
                     colorValue = desktopColor.value;
                 } else if (mobileColor && mobileColor.value) {
                     colorValue = mobileColor.value;
